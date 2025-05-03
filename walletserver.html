@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Coinbase Wallet Transfer Server</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #1c1c1c, #3a3a3a);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #2c2f33;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      color: #4FC3F7;
+      margin-bottom: 25px;
+    }
+
+    .balance {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 25px;
+    }
+
+    .balance-column {
+      background: #40444b;
+      padding: 15px;
+      border-radius: 8px;
+      width: 48%;
+    }
+
+    .balance-column label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #aaa;
+    }
+
+    .balance-column span {
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .field {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #40444b;
+      color: white;
+      font-size: 16px;
+    }
+
+    input::placeholder {
+      color: #bbb;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: #4FC3F7;
+      color: #1c1c1c;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #29b6f6;
+    }
+
+    .result, .processing {
+      margin-top: 25px;
+      background-color: #2e7d32;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 15px;
+      text-align: left;
+      color: #d0f8ce;
+      display: none;
+    }
+
+    .processing {
+      background-color: #ffaa00;
+      color: #1c1c1c;
+      font-weight: bold;
+    }
+
+    .error {
+      color: #ff6b6b;
+      font-size: 14px;
+      margin-top: -10px;
+      margin-bottom: 10px;
+    }
+
+    @media screen and (max-width: 500px) {
+      .balance {
+        flex-direction: column;
+      }
+      .balance-column {
+        width: 100%;
+        margin-bottom: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Coinbase Wallet Transfer Server</h1>
+
+  <div class="balance">
+    <div class="balance-column">
+      <label>Available Balance (BTC):</label>
+      <span id="available-balance-1">$231,612.31 (2.39 BTC)</span>
+    </div>
+    <div class="balance-column">
+      <label>Available Balance (ETH):</label>
+      <span id="available-balance-2">$5,510.03 (3 ETH)</span>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Total Wallet Balance:</label>
+    <input type="text" id="total-balance" value="$237,122.34" readonly>
+  </div>
+
+  <div class="field">
+    <label>Recipient Name:</label>
+    <input type="text" id="recipient-name" value="David Bishop">
+  </div>
+
+  <div class="field">
+    <label>Account Number:</label>
+    <input type="text" id="account-number" placeholder="Enter account number">
+  </div>
+
+  <div class="field">
+    <label>Amount to Send (USD):</label>
+    <input type="number" id="amount" placeholder="e.g., 250" min="0" step="0.01">
+    <div class="error" id="error-message"></div>
+  </div>
+
+  <button onclick="sendCrypto()">Send</button>
+
+  <div class="processing" id="processing-message">Processing transaction, please wait...</div>
+  <div class="result" id="result-message"></div>
+</div>
+
+<script>
+function sendCrypto() {
+  const recipient = document.getElementById('recipient-name').value.trim();
+  const account = document.getElementById('account-number').value.trim();
+  const amount = parseFloat(document.getElementById('amount').value);
+  const available1 = document.getElementById('available-balance-1');
+  const available2 = document.getElementById('available-balance-2');
+  const totalBalanceEl = document.getElementById('total-balance');
+  const errorMessage = document.getElementById('error-message');
+  const resultBox = document.getElementById('result-message');
+  const processingBox = document.getElementById('processing-message');
+
+  let total = parseFloat(totalBalanceEl.value.replace(/[^0-9.-]+/g,""));
+
+  errorMessage.textContent = "";
+  resultBox.style.display = "none";
+  processingBox.style.display = "none";
+
+  if (!recipient || !account || isNaN(amount) || amount <= 0) {
+    errorMessage.textContent = "Please fill out all fields correctly.";
+    return;
+  }
+
+  if (amount > total) {
+    errorMessage.textContent = "Insufficient total wallet balance.";
+    return;
+  }
+
+  processingBox.style.display = "block";
+
+  setTimeout(() => {
+    // Set all balances to $0.00
+    available1.textContent = "$0.00";
+    available2.textContent = "$0.00";
+    totalBalanceEl.value = "$0.00";
+
+    const arrivalDate = "May 13th, 2025";
+
+    resultBox.innerHTML = `
+      <strong>✅ Transaction Successful!</strong><br><br>
+      You have sent <strong>$${amount.toFixed(2)}</strong> to <strong>${recipient}</strong> at account <strong>${account}</strong>.<br><br>
+      🕒 <em>Estimated arrival in bank account:</em> <strong>${arrivalDate}</strong>.
+    `;
+
+    processingBox.style.display = "none";
+    resultBox.style.display = "block";
+  }, 5000);
+}
+</script>
+
+</body>
+</html>
